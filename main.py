@@ -7,15 +7,15 @@ import os
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-completion = client.chat.completions.create(
-  model="gpt-3.5-turbo",
-  messages=[
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Hello!"}
-  ]
-)
+# completion = client.chat.completions.create(
+#   model="gpt-3.5-turbo",
+#   messages=[
+#     {"role": "system", "content": "You are a helpful assistant."},
+#     {"role": "user", "content": "Hello!"}
+#   ]
+# )
 
-print(completion.choices[0].message)
+# print(completion.choices[0].message)
 
 
 def chatbot_response(user_input):
@@ -29,7 +29,7 @@ def chatbot_response(user_input):
             ]
         )
 
-        return completion.choices[0].message
+        return completion.choices[0].message.content
 
     except Exception as e:
         return f"An error occurred: {str(e)}"
