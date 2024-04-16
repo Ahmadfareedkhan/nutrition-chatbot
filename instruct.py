@@ -73,4 +73,4 @@ interface = gr.Interface(fn=generate_proposal,
                          description="Ask me anything about nutrition, diet plans, or emergency assistance. For example, 'What should I eat to stay fit?' or 'What to do in case of a snake bite?'")
 
 # Launch the Gradio app
-interface.launch()
+interface.launch(share=True)
