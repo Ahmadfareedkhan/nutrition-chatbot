@@ -1,2 +1,4 @@
 gradio
 openai
+azure-cognitiveservices-speech
+python-dotenv

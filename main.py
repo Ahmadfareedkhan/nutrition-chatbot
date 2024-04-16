@@ -1,7 +1,10 @@
 import gradio as gr 
 from openai import OpenAI
-client = OpenAI()
 import os
+from dotenv import load_dotenv
+load_dotenv(".env")
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 
 # aneeb
 def chatbot_response(user_input):
