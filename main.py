@@ -3,7 +3,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
-import wave
+
 
 # Loads and set environment variables
 load_dotenv(".env")
