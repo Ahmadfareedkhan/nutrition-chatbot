@@ -3,6 +3,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
+import wave
 
 # Loads and set environment variables
 load_dotenv(".env")
@@ -13,37 +14,51 @@ client = OpenAI(api_key=api_key)
 
 def recognize_from_microphone(file_info):
     if not file_info:
-        return "", "No audio file received."
+        return "No audio file received.", ""
     file_path = file_info
+    print(f"File path received: {file_path}")  # Verify file path
+
+    # Check file existence
     if not os.path.exists(file_path):
-        return "", f"File not found: {file_path}"
+        return f"File not found: {file_path}", ""
+
+    # Configure Azure Speech SDK
     speech_config = speechsdk.SpeechConfig(subscription=os.environ['SPEECH_KEY'], region=os.environ['SPEECH_REGION'])
     speech_config.speech_recognition_language = "en-US"
-    try:
-        audio_config = speechsdk.audio.AudioConfig(filename=file_path)
-        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-        result = speech_recognizer.recognize_once()
-        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            return result.text, ""
-        elif result.reason == speechsdk.ResultReason.NoMatch:
-            return "", "No speech could be recognized."
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            return "", f"Speech Recognition canceled: {result.cancellation_details.reason}."
-    except Exception as e:
-        return "", f"Error during speech recognition: {str(e)}"
+    audio_config = speechsdk.audio.AudioConfig(filename=file_path)
 
-    return "", "Unexpected error during speech recognition."
+    # Create recognizer and recognize once
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+    result = speech_recognizer.recognize_once()
 
-def chatbot_response(user_input="", audio_input=None, weight=None, height=None, gender=None, plan_type=None):
-    transcription, error = recognize_from_microphone(audio_input) if audio_input else ("", "")
-    if transcription:
-        user_input = transcription
-    if not user_input.strip():
-        return error or "Please provide some input or speak into the microphone.", ""
+    # Handle recognition result
+    if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        return result.text, ""
+    if result.reason == speechsdk.ResultReason.NoMatch:
+        return "No speech could be recognized.", ""
+    if result.reason == speechsdk.ResultReason.Canceled:
+        return f"Recognition canceled: {result.cancellation_details.reason}", ""
 
-    # Add weight and height to the prompt if provided
-    detailed_input = f"User details - Gender: {gender}, Weight: {weight} kg, Height: {height} cm, Plan Type: {plan_type}. Question: {user_input}" \
-                     if weight and height and gender and plan_type else user_input
+    return "Unexpected error during speech recognition.", ""
+
+def chatbot_response(user_input="", gender=None, plan_type=None, weight=None, height=None, audio_input=None):
+    transcription = ""  # Initialize transcription at the start of the function
+    error_message = ""  # Initialize an error message variable
+    
+    if audio_input:
+        transcription, error = recognize_from_microphone(audio_input)
+        if error:
+            error_message = error  # Capture the error to return it properly
+        else:
+            user_input = transcription  # Use the transcription if there's no error
+
+    if not user_input.strip() and not transcription.strip():
+        error_message = "Please provide audio input or type your question."
+
+    if error_message:
+        return error_message, ""  # Return the error with an empty second value
+
+    detailed_input = f"User details - Gender: {gender}, Plan Type: {plan_type}, Weight: {weight} kg, Height: {height} cm. Question: {user_input}"
     try:
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -53,9 +68,12 @@ def chatbot_response(user_input="", audio_input=None, weight=None, height=None, 
             ]
         )
         response = completion.choices[0].message.content
-        return transcription, response
+        return transcription, response  # Ensure both values are returned
     except Exception as e:
-        return transcription, f"An error occurred during response generation: {str(e)}"
+        return transcription, f"An error occurred during response generation: {str(e)}"  # Return both values even in case of an exception
+
+
+
 
 def emergency_assistance(query):
     if not query.strip():
@@ -77,21 +95,21 @@ def emergency_assistance(query):
 interface1 = gr.Interface(
     fn=chatbot_response,
     inputs=[
-        gr.Textbox(lines=5, label="Input here", placeholder="Type or say your question here..."),
+        gr.Textbox(lines=5, label="Input Here", placeholder="Type or say your question here..."),
         gr.Radio(choices=["Male", "Female", "Other"], label="Gender"),
         gr.Radio(choices=["Weight Gain", "Weight Loss"], label="Plan Type"),
         gr.Number(label="Weight (kg)", info="Enter your weight in kg"),
         gr.Number(label="Height (cm)", info="Enter your height in cm"),
         gr.Audio(type="filepath", label="Record your question")
-    ],
+        ],
     outputs=[gr.Text(label="Transcription"), gr.Text(label="Response")],
     title="Personalized Nutrition AI Advisor",
-    description="Ask me anything about nutrition. Provide your weight and height for personalized advice."
+    description="Ask me anything about nutrition. Provide your Gender, Plan Type, Weight and Height for personalized advice."
 )
 
 interface2 = gr.Interface(
     fn=emergency_assistance,
-    inputs=[gr.Textbox(lines=5, placeholder="Enter your emergency nutrition query here...")],
+    inputs=[gr.Textbox(lines=5, label="Query", placeholder="Enter your emergency nutrition query here...")],
     outputs=[gr.Text(label="Response")],
     title="Emergency Assistance",
     description="To better assist you, could you explain what led to this emergency?"
