@@ -34,7 +34,7 @@ def recognize_from_microphone(file_info):
 
     return "", "Unexpected error during speech recognition."
 
-def chatbot_response(user_input="", audio_input=None, weight=None, height=None):
+def chatbot_response(user_input="", audio_input=None, weight=None, height=None, gender=None, plan_type=None):
     transcription, error = recognize_from_microphone(audio_input) if audio_input else ("", "")
     if transcription:
         user_input = transcription
@@ -42,7 +42,8 @@ def chatbot_response(user_input="", audio_input=None, weight=None, height=None):
         return error or "Please provide some input or speak into the microphone.", ""
 
     # Add weight and height to the prompt if provided
-    detailed_input = f"User details - Weight: {weight} kg, Height: {height} cm. Question: {user_input}" if weight and height else user_input
+    detailed_input = f"User details - Gender: {gender}, Weight: {weight} kg, Height: {height} cm, Plan Type: {plan_type}. Question: {user_input}" \
+                     if weight and height and gender and plan_type else user_input
     try:
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -77,12 +78,14 @@ interface1 = gr.Interface(
     fn=chatbot_response,
     inputs=[
         gr.Textbox(lines=5, label="Input here", placeholder="Type or say your question here..."),
+        gr.Radio(choices=["Male", "Female", "Other"], label="Gender"),
+        gr.Radio(choices=["Weight Gain", "Weight Loss"], label="Plan Type"),
         gr.Number(label="Weight (kg)", info="Enter your weight in kg"),
         gr.Number(label="Height (cm)", info="Enter your height in cm"),
         gr.Audio(type="filepath", label="Record your question")
     ],
     outputs=[gr.Text(label="Transcription"), gr.Text(label="Response")],
-    title="Your AI Nutrition Consultant",
+    title="Personalized Nutrition AI Advisor",
     description="Ask me anything about nutrition. Provide your weight and height for personalized advice."
 )
 
@@ -91,7 +94,7 @@ interface2 = gr.Interface(
     inputs=[gr.Textbox(lines=5, placeholder="Enter your emergency nutrition query here...")],
     outputs=[gr.Text(label="Response")],
     title="Emergency Assistance",
-    description="Please provide quick info about your emergency"
+    description="To better assist you, could you explain what led to this emergency?"
 )
 
 # Combined interface with tabs

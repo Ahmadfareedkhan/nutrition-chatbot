@@ -34,6 +34,29 @@ def recognize_from_microphone(file_info):
 
     return "", "Unexpected error during speech recognition."
 
+def chatbot_response(user_input="", audio_input=None, weight=None, height=None, gender=None, plan_type=None):
+    transcription, error = recognize_from_microphone(audio_input) if audio_input else ("", "")
+    if transcription:
+        user_input = transcription
+    if not user_input.strip():
+        return error or "Please provide some input or speak into the microphone.", ""
+
+    # Add weight and height to the prompt if provided
+    detailed_input = f"User details - Gender: {gender}, Weight: {weight} kg, Height: {height} cm, Plan Type: {plan_type}. Question: {user_input}" \
+                     if weight and height and gender and plan_type else user_input
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a nutrition consultant AI, capable of providing natural diet plans and emergency assistance based on user inputs."},
+                {"role": "user", "content": detailed_input},
+            ]
+        )
+        response = completion.choices[0].message.content
+        return transcription, response
+    except Exception as e:
+        return transcription, f"An error occurred during response generation: {str(e)}"
+
 def emergency_assistance(query):
     if not query.strip():
         return "Please provide a query for emergency assistance."
@@ -41,7 +64,7 @@ def emergency_assistance(query):
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You will act as an emergency assistance provider about nutrition. Whenever the user provides prompt your job is to provide him with better assistance by keeping in mind its an emergency case."},
+                {"role": "system", "content": "As an AI serving as an emergency nutrition advisor, your objective is to provide prompt and accurate nutritional guidance in urgent situations. When users present their concerns, you should deliver tailored advice that addresses the critical aspects of their nutritional needs quickly and effectively. Focus on offering clear, practical, and context-specific solutions to ensure their immediate dietary requirements are met."},
                 {"role": "user", "content": query},
             ]
         )
@@ -50,32 +73,20 @@ def emergency_assistance(query):
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
-def chatbot_response(user_input="", audio_input=None):
-    transcription, error = recognize_from_microphone(audio_input) if audio_input else ("", "")
-    if transcription:
-        user_input = transcription
-    if not user_input.strip():
-        return error or "Please provide some input or speak into the microphone.", ""
-    try:
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a nutrition consultant AI, capable of providing natural diet plans and emergency assistance based on user inputs."},
-                {"role": "user", "content": user_input},
-            ]
-        )
-        response = completion.choices[0].message.content
-        return transcription, response
-    except Exception as e:
-        return transcription, f"An error occurred during response generation: {str(e)}"
-
 # Gradio interfaces
 interface1 = gr.Interface(
     fn=chatbot_response,
-    inputs=[gr.Textbox(lines=5, label="Input here", placeholder="Type or say your question here..."), gr.Audio(type="filepath", label="Record your question")],
+    inputs=[
+        gr.Textbox(lines=5, label="Input here", placeholder="Type or say your question here..."),
+        gr.Radio(choices=["Male", "Female", "Other"], label="Gender"),
+        gr.Radio(choices=["Weight Gain", "Weight Loss"], label="Plan Type"),
+        gr.Number(label="Weight (kg)", info="Enter your weight in kg"),
+        gr.Number(label="Height (cm)", info="Enter your height in cm"),
+        gr.Audio(type="filepath", label="Record your question")
+    ],
     outputs=[gr.Text(label="Transcription"), gr.Text(label="Response")],
-    title="Your AI Nutrition Consultant",
-    description="Ask me anything about nutrition"
+    title="Personalized Nutrition AI Advisor",
+    description="Ask me anything about nutrition. Provide your weight and height for personalized advice."
 )
 
 interface2 = gr.Interface(
@@ -83,7 +94,7 @@ interface2 = gr.Interface(
     inputs=[gr.Textbox(lines=5, placeholder="Enter your emergency nutrition query here...")],
     outputs=[gr.Text(label="Response")],
     title="Emergency Assistance",
-    description="Please provide quick info about your emergency"
+    description="To better assist you, could you explain what led to this emergency?"
 )
 
 # Combined interface with tabs
