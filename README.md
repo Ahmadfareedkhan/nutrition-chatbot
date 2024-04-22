@@ -1,7 +1,3 @@
-Based on the provided files, the project can be described as follows for your Upwork portfolio:
-
----
-
 **Title: HealthyBytes: AI Nutrition Consultant**
 
 **Project Overview:**
@@ -16,7 +12,7 @@ HealthyBytes is a sophisticated online chatbot designed to act as a personal nut
 - Gradio: For creating web-based interfaces for real-time interactions.
 - OpenAI: Leveraging large language models for generating personalized diet recommendations.
 - Azure Cognitive Speech Services: To support robust speech recognition and synthesis, enabling effective voice interactions.
-- Python-dotenv: For managing environment variables efficiently within the application.
+
 
 **Deployment:**
 The application is designed to be highly responsive and mobile-friendly, ensuring it performs optimally across various devices like smartphones, laptops, and tablets.
@@ -24,6 +20,3 @@ The application is designed to be highly responsive and mobile-friendly, ensurin
 **Objective:**
 The primary goal of HealthyBytes is to democratize access to personalized nutrition advice, making it easy, quick, and affordable for everyone to maintain their health and well-being.
 
----
-
-This description incorporates technical details with user-focused features, making it suitable for a professional portfolio showcasing your skills in developing AI-based applications.
