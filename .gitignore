@@ -1,3 +1,7 @@
 .env
 HealthyBytes.docx
 venv
+assistant.py
+instruct.py
+test.py
+HealthyBytes
