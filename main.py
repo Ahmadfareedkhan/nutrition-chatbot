@@ -8,7 +8,7 @@ import wave
 # Loads and set environment variables
 load_dotenv(".env")
 api_key = os.getenv("OPENAI_API_KEY")
-os.environ['SPEECH_KEY'] = '3ca965cb089e415d85a780e0ce40a3cf'
+speech_key = os.getenv("speech_key")
 os.environ['SPEECH_REGION'] = 'eastus'
 client = OpenAI(api_key=api_key)
 
@@ -24,7 +24,7 @@ def recognize_from_microphone(file_info):
         return f"File not found: {file_path}", ""
 
     # Configure Azure Speech SDK
-    speech_config = speechsdk.SpeechConfig(subscription=os.environ['SPEECH_KEY'], region=os.environ['SPEECH_REGION'])
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=os.environ['SPEECH_REGION'])
     speech_config.speech_recognition_language = "en-US"
     audio_config = speechsdk.audio.AudioConfig(filename=file_path)
 
@@ -45,7 +45,7 @@ def recognize_from_microphone(file_info):
 
 def synthesize_speech(text, filename="output.wav"):
     """ Converts text to speech and saves it to a WAV file. """
-    speech_config = speechsdk.SpeechConfig(subscription=os.environ['SPEECH_KEY'], region=os.environ['SPEECH_REGION'])
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=os.environ['SPEECH_REGION'])
     speech_config.speech_synthesis_voice_name = "en-US-AvaMultilingualNeural"
     audio_config = speechsdk.audio.AudioConfig(filename=filename)
 
