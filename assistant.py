@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
 
+# assistant single app
+
 # Load and set environment variables
 load_dotenv(".env")
 api_key = os.getenv("OPENAI_API_KEY")
