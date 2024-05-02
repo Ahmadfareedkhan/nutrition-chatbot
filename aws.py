@@ -1,61 +1,89 @@
+from botocore.exceptions import BotoCoreError, ClientError
+from contextlib import closing
+import os
+import urllib
+import boto3
 import gradio as gr
 from openai import OpenAI
 import os
+import time
+import json
 from dotenv import load_dotenv
-import azure.cognitiveservices.speech as speechsdk
-import wave
+
 
 # Loads and set environment variables
 load_dotenv(".env")
 api_key = os.getenv("OPENAI_API_KEY")
-speech_key = os.getenv('speech_key')
-os.environ['SPEECH_REGION'] = 'eastus'
 client = OpenAI(api_key=api_key)
+
 
 
 def recognize_from_microphone(file_info):
     if not file_info:
         return "No audio file received.", ""
     file_path = file_info
-    print(f"File path received: {file_path}")  # Verify file path
+    print(f"File path received: {file_path}")
 
     # Check file existence
     if not os.path.exists(file_path):
         return f"File not found: {file_path}", ""
 
-    # Configure Azure Speech SDK
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=os.environ['SPEECH_REGION'])
-    speech_config.speech_recognition_language = "en-US"
-    audio_config = speechsdk.audio.AudioConfig(filename=file_path)
+    # Configuring Amazon Transcribe
+    transcribe_client = boto3.client('transcribe')
+    s3_client = boto3.client('s3')
+    bucket_name = 'nutrition-bot'  # Specify your S3 bucket name
+    object_name = os.path.basename(file_path)
 
-    # Create recognizer and recognize once
-    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-    result = speech_recognizer.recognize_once()
+    # Upload file to S3
+    s3_client.upload_file(file_path, bucket_name, object_name)
+    job_name = f"TranscriptionJob-{int(time.time())}"
+    job_uri = f"s3://{bucket_name}/{object_name}"
 
-    # Handle recognition result
-    if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        return result.text, ""
-    if result.reason == speechsdk.ResultReason.NoMatch:
-        return "No speech could be recognized.", ""
-    if result.reason == speechsdk.ResultReason.Canceled:
-        return f"Recognition canceled: {result.cancellation_details.reason}", ""
+    # Start transcription job
+    transcribe_client.start_transcription_job(
+        TranscriptionJobName=job_name,
+        Media={'MediaFileUri': job_uri},
+        MediaFormat='mp3',  # or your file format, e.g., wav
+        LanguageCode='en-US'
+    )
 
-    return "Unexpected error during speech recognition.", ""
+    # Checking job status
+    while True:
+        status = transcribe_client.get_transcription_job(TranscriptionJobName=job_name)
+        if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+            break
+        time.sleep(5)
+
+    # Process the transcription result
+    if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
+        transcript_uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
+        transcript_response = urllib.request.urlopen(transcript_uri)
+        transcript_data = json.load(transcript_response)
+        transcript_text = transcript_data['results']['transcripts'][0]['transcript']
+        return transcript_text, ""
+    return "Failed to transcribe audio.", ""
 
 
-def synthesize_speech(text, filename="output.wav"):
-    """ Converts text to speech and saves it to a WAV file. """
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=os.environ['SPEECH_REGION'])
-    speech_config.speech_synthesis_voice_name = "en-US-AvaMultilingualNeural"
-    audio_config = speechsdk.audio.AudioConfig(filename=filename)
+def synthesize_speech(text, filename="output.mp3"):
+    """Converts text to speech using Amazon Polly and saves it to an MP3 file."""
+    # Create a Polly client
+    polly_client = boto3.client('polly')
 
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-    result = synthesizer.speak_text_async(text).get()
+    # Synthesize speech
+    response = polly_client.synthesize_speech(
+        Text=text,
+        OutputFormat='mp3',  # MP3 output format
+        VoiceId='Salli'     # Using Joanna voice, you can choose another
+    )
 
-    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+    # Accessing the audio stream from the response
+    if "AudioStream" in response:
+        with open(filename, 'wb') as file:
+            file.write(response['AudioStream'].read())
         print(f"Speech synthesized for text [{text}] and saved to {filename}")
     else:
         print(f"Failed to synthesize speech for text [{text}]")
+
     return filename
 
 
