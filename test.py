@@ -28,7 +28,7 @@ Built by Aneeb
 
 PLACEHOLDER = """
 <div style="padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center;">
-   <img src="https://enigmaguides.com/wp-content/uploads/2024/03/Nutrition.webp" style="width: 80%; max-width: 550px; height: auto; opacity: 0.55;"> 
+   <img src="https://enigmaguides.com/wp-content/uploads/2024/03/Nutrition-no-bg.png" style="width: 80%; max-width: 550px; height: auto; opacity: 0.55;"> 
    <h1 style="font-size: 28px; margin-bottom: 2px; opacity: 0.55;">Nutrition Chatbot</h1>
    <p style="font-size: 18px; margin-bottom: 2px; opacity: 0.65;">Ask me anything...</p>
 </div>
