@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
-
+access_key = os.getenv('access_key')
+secret_key = os.getenv('secret_key')
 
 
 def recognize_from_microphone(file_info):
@@ -29,8 +30,8 @@ def recognize_from_microphone(file_info):
         return f"File not found: {file_path}", ""
 
     # Configuring Amazon Transcribe
-    transcribe_client = boto3.client('transcribe')
-    s3_client = boto3.client('s3')
+    transcribe_client = boto3.client('transcribe', region_name='us-east-1', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+    s3_client = boto3.client('s3', region_name='us-west-2', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
     bucket_name = 'nutrition-bot'  # Specify your S3 bucket name
     object_name = os.path.basename(file_path)
 
@@ -67,7 +68,7 @@ def recognize_from_microphone(file_info):
 def synthesize_speech(text, filename="output.mp3"):
     """Converts text to speech using Amazon Polly and saves it to an MP3 file."""
     # Create a Polly client
-    polly_client = boto3.client('polly')
+    polly_client = boto3.client('polly', region_name='us-east-1', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
 
     # Synthesize speech
     response = polly_client.synthesize_speech(
