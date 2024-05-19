@@ -1,16 +1,16 @@
 import gradio as gr
-import os
-import azure.cognitiveservices.speech as speechsdk
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
 
 # Set an environment variable
-speech_key = os.getenv('speech_key')
-speech_region = 'eastus'
+load_dotenv('.env')
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 
+# Adding custom styling using html and css to improve UI
 DESCRIPTION = '''
 <div>
 <h1 style="text-align: center;">HealthyBytes: Your Personalized AI Nutrition Advisor</h1>
@@ -23,12 +23,12 @@ DESCRIPTION = '''
 LICENSE = """
 <p/>
 ---
-Built by Anonymous
+Built by Aneeb
 """
 
 PLACEHOLDER = """
 <div style="padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center;">
-   <img src="Nutrition2.webp" style="width: 80%; max-width: 550px; height: auto; opacity: 0.55;  "> 
+   <img src="https://enigmaguides.com/wp-content/uploads/2024/03/Nutrition-no-bg.png" style="width: 80%; max-width: 550px; height: auto; opacity: 0.55;"> 
    <h1 style="font-size: 28px; margin-bottom: 2px; opacity: 0.55;">Nutrition Chatbot</h1>
    <p style="font-size: 18px; margin-bottom: 2px; opacity: 0.65;">Ask me anything...</p>
 </div>
@@ -49,6 +49,7 @@ h1 {
 """
 
 
+# Function that returns response from Model
 def chat_turbo_3_5(message: str, 
                    history: list, 
                    temperature: float, 
