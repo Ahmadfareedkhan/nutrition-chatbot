@@ -105,7 +105,7 @@ def chatbot_response(user_input="", gender=None, weight=None, height=None, audio
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a nutrition consultant AI."},
+                {"role": "system", "content": "You are a nutrition consultant AI. Please decide weight gain or loss according to the user input and always mention what type of meal you are providing, the weight gain meal or loss or anyother type"},
                 {"role": "user", "content": detailed_input},
             ]
         )
@@ -137,7 +137,7 @@ def emergency_assistance(query, audio_input=None):
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "As an AI serving as an emergency nutrition advisor.Please decide weight gain or loss according to the user input and always mention what type of meal you are providing, the weight gain meal or loss or anyother type"},
+                {"role": "system", "content": "As an AI serving as an best emergency medical assistant for emergeny accidents like sanke bit or road accident"},
                 {"role": "user", "content": query},
             ]
         )
